@@ -175,7 +175,7 @@ Each socket has its own physical DRAM pool attached via its own integrated memor
 - Next workload class: memory-heavier/divergence-heavy scenes (e.g., hair/curve-rich scenes) to stress cache/bandwidth behavior more realistically.
 
 ### Harness status
-Implemented under for L2<->L1 for the case of M4 Pro:
+Implemented under for L2<->L1 for the case of M4 Pro ([README](https://github.com/sgauthamr2001/bonsai/apps/rtiow/cpu/bench/README.md)):
 
 `code/bonsai/apps/rtiow/cpu/bench/`
 
