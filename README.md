@@ -200,7 +200,7 @@ Includes:
 
 1. Run counter-backed analysis on selected anchors (small/mid/large grid, low/high thread count).
 2. Add memory-heavier benchmark scenes (hair/curve-like or similarly irregular geometry/material access).
-3. Extend Bonsai’s tree representation to use 32-bit node indices so stress tests can exceed today’s scene-size limits without failure. Bigger scenes lengthen each run, so the evaluation design still needs a clear way to separate “tree got larger” from incidental timing variation. The CPU harness was exercised on Apple Silicon; threading via GCD may require checks or small portability fixes on Intel (Sherlock). (Similar fixes were required to run Bonsai on Sherlock).
+3. Extend Bonsai’s tree representation to use 32-bit node indices so stress tests can exceed today’s scene-size limits without failure. Bigger scenes lengthen each run, so the evaluation needs to be carefully designed to avoid large design and testing times. For that reason, we build the harness at L2 <-> L1D level first. The CPU harness was exercised on Apple Silicon; threading via GCD may require checks or small portability fixes on Intel (Sherlock). (Similar fixes were required to run Bonsai on Sherlock).
 4. Implement handwritten sharded/distributed prototype and measure ray movement overhead explicitly.
 5. Compare two backends and come up with a portable abstraction.
 
