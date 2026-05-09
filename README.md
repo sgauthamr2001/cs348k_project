@@ -221,7 +221,8 @@ Or clone with submodules in one step:
 ```bash
 git clone --recurse-submodules <url-of-this-repo>
 ```
-
+```
 cs348k-project/
 ├── code/bonsai/             # Submodule: Bonsai compiler + RTIOW benchmark harness
 ├── README.md                # Project README (this file)
+```
