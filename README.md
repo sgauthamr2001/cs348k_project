@@ -208,7 +208,7 @@ Includes:
 
 ## Repository Structure
 
-Bonsai is included as a Git submodule at `code/bonsai` ([sgauthamr2001/bonsai](https://github.com/sgauthamr2001/bonsai))
+Bonsai is included as a Git submodule at `code/bonsai` ([sgauthamr2001/bonsai](https://github.com/sgauthamr2001/bonsai/tree/main/apps/rtiow/cpu/bench))
 
 After cloning this project, initialize submodules:
 
