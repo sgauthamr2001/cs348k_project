@@ -230,4 +230,4 @@ cs348k-project/
 ---
 
 ## Checkpoint-2: 
-Described here: ([Checkpoint-2]([https://github.com/sgauthamr2001/cs348k_project/checkpoint_2](https://github.com/sgauthamr2001/cs348k_project/tree/main/checkpoint_2)))
+Described here: ([Checkpoint-2](https://github.com/sgauthamr2001/cs348k_project/tree/main/checkpoint_2))
