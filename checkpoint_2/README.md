@@ -1,4 +1,4 @@
-````markdown
+
 # Checkpoint 2
 
 This checkpoint moves from the Checkpoint 1 single-device L2↔L1 harness on the
