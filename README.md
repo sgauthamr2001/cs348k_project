@@ -224,5 +224,12 @@ git clone --recurse-submodules <url-of-this-repo>
 ```
 cs348k-project/
 ├── code/bonsai/             # Submodule: Bonsai compiler + RTIOW benchmark harness
+├── checkpoint_2             # Files and document for checkpoint2
 ├── README.md                # Project README (this file)
+```
+---
+
+## Checkpoint-2: 
+Described here: ([Checkpoint-2](https://github.com/sgauthamr2001/cs348k_project/checkpoint_2))
+
 ```

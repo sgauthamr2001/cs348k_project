@@ -1,0 +1,7 @@
+exp,config,grid,depth,samples,setup_ms,render_ms,wall_ms
+E3,A_local,500,5,1,1179,9475,10812
+E3,B_remote,500,5,1,1313,9549,11018
+E3,A_local,1500,5,1,6988,10759,17961
+E3,B_remote,1500,5,1,8094,10126,18452
+E3,A_local,3000,5,1,30738,13199,44337
+E3,B_remote,3000,5,1,35850,13820,50074
