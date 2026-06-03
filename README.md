@@ -1,233 +1,200 @@
-# Towards Compiler-Generated Distributed Tree Traversal
+# Do we need compiler support for replication and partitioning for multi-socket CPU ray tracing?
 
-## Motivation
-
-Acceleration structures such as BVHs are central to ray tracing, collision detection, and nearest-neighbor queries. As scene scale increases (millions to billions of primitives), acceleration structure memory can exceed the capacity of a single device. At that point, systems either fail, degrade via paging/out-of-core behavior, or require handcrafted distributed implementations with custom partitioning, replication, and ray routing logic when a machine with larger capacity is unavailable. 
-
-Recent compiler systems have substantially improved **single-device** tree traversal:
-
-- **Bonsai** compiles high-level declarative queries into work-efficient pruned traversals via symbolic interval/predicate reasoning.
-- **Scion** separates traversal semantics from physical layout, enabling systematic data-layout exploration without changing traversal code.
-
-Together they form a clean compilation stack:
-
-**query/specification -> traversal IR -> physical layout -> executable**
-
-However, this stack currently assumes a unified memory space on one device. There is no first-class support for distribution, sharding, replication, or movement across multiple memory domains (e.g., L1/L2 clusters, sockets, GPUs, nodes).
-
-## Project Hypothesis
-
-A runtime-layer extension can make Bonsai/Scion-generated code usable in distributed settings **without modifying compiler internals initially**.
-
-Core idea:
-1. Keep existing Bonsai/Scion code generation unchanged.
-2. Add a runtime layer that controls partitioning, scheduling, and ray/data movement.
-3. Determine, empirically, **which workload + memory-hierarchy regimes benefit from sharding/distribution**.
-4. Use those findings to motivate a general abstraction that could eventually be compiler-generated.
-
-This project is not, at first, about designing new language syntax and semantics. It is about establishing **when distribution is worth it**, and what control knobs are needed. 
+*CS 348K Final Project Report*
+Team members: **Sai Gautham Ravipati**, sgautham@stanford.edu
 
 ---
 
-## Related Work
+## 1. Background and Setup
 
-- **Bonsai (Root et al., PLDI 2026)**  
-  Generates pruned tree traversals from high-level queries; lowers TTIR to efficient CUDA/C++ for single-device execution.
+### 1.1 The Problem
 
-- **Scion (Gyurgyik et al., PLDI 2026)**  
-  Decouples logical tree structure from physical layout; enables layout exploration in a single address space.
+A multi-socket server CPU, from a memory standpoint, is a machine with a small distributed memory: each socket owns its own DRAM and pays an access cost (latency and bandwidth) when it accesses the DRAM of a different socket. Prior distributed ray/path-tracing systems provide techniques for placing the acceleration structure (such as a Bounded Volume Hierarchy — BVH) to incorporate the distributed setup. Systems such as **R2E2** (treelet replication by load) and **Wald et al.-style ray-queue cycling** address this by either replicating the scene's acceleration structure on each node, or by partitioning the scene across nodes and forwarding rays to whichever node owns the data.
 
-- **R2E2 (Fouladi et al., SIGGRAPH 2022)**  
-  Distributed BVH ray tracing with manual treelet partitioning and replication; strong results but scene-specific and hand-tuned.
+Current compilation systems such as **Bonsai** turn a high-level recursive geometric query plus a description of the BVH and its layout into fused traversal code that runs on multi-threaded CPUs and GPUs.
 
-- **Ray Queue Cycling (Wald et al., HPG 2023)**  
-  Multi-GPU data-parallel path tracing with ring-based ray queue cycling; demonstrates practical distribution on single-node multi-GPU systems, implemented manually in OptiX/CUDA.
+![Bonsai compiler: inputs and outputs.](figures/04_bonsai_blackbox.png)
 
-- **Sequoia (Fatahalian et al., SC 2006)**  
-  Hierarchical machine models for memory-aware scheduling; highly relevant conceptually, but focused on streaming kernels rather than irregular tree traversal.
+Its scheduling language has primitives like `Split`, `Sort`, `Loopify`, `Defer`, `Parallelize` and node-layout choices, but it does not have a notion of partitioning or replicating BVH data across memory nodes. The code emitted by Bonsai assumes a unified memory in which the BVH is stored across the DRAMs of different sockets. On a multi-socket machine this means that traversals into a BVH node can cross sockets to access a remote DRAM.
 
-- **Legion (Bauer et al., SC 2012)**  
-  Distributed region-based runtime and mapping model; useful reference for logical partitioning and placement policies.
+Even before designing a language extension around the Bonsai compiler to generate distributed placement of BVH structures, in this project we investigate the effects of different BVH placements, scoped to single-node, multi-socket CPUs (i.e., the "small distributed memory" case, not network-distributed). We try to answer whether a simple interleaved placement of the BVH is optimal under most circumstances, and under what scenarios this assumption breaks.
 
----
+![A multi-socket CPU as a small distributed-memory machine. A ray's BVH walk reaches into remote DRAM.](figures/05_numa_topology.png)
 
-## Theoretical framing for this project
+The following are the input/output description of our system:
+**Inputs.** A path-tracing implementation (closest-hit traversal), a BVH built over the scene, a target machine with two or more NUMA nodes, and a placement strategy that controls how the BVH (and the rays) are laid out across nodes.
+**Outputs.** A rendered frame from the path tracer, the strategy's render time, and structural statistics (per-socket footprint, BVH build time, etc.) needed to interpret the efficacy of a strategy.
+**Constraints.** Equal compute across all strategies (both sockets, all available cores) and identical scene output across all strategies.
 
-Distribution/sharding is useful only when its gains exceed its overhead.  
-For this project, we model that tradeoff as:
+### 1.2 Falsifiable hypothesis
 
-**Net Benefit ≈ (Locality/aggregate-bandwidth gain from distribution/sharding) - (ray/data transfer + queue/sync overhead)**
+On realistic ray-tracing workloads on a multi-socket CPU, NUMA-aware placement (replication or partitioning) gives a non-negligible speedup over the current interleaved placement. If true across regimes, Bonsai should expose this primitive. If false, the language change isn't worth the complexity for distribution at this level of the hierarchy.
 
-A practical criterion:
+### 1.3 Summary of the technical problem
 
-Distribution is promising when:
-- baseline is memory-system constrained at a target hierarchy level (e.g., L2<->L1 or socket<->socket),
-- partitioning reduces pressure at that level,
-- communication/synchronization overhead is amortized by reduced stall time.
+Using a performance simulator can be slow; hence, to try different placement strategies, it is important to isolate the effects of these strategies on application performance:
 
-Distribution is not promising when:
-- workload is compute-bound,
-- per-ray hot set already fits local cache well,
-- communication dominates.
-
-This criterion motivates the checkpoint experiments below.
+- **Cache-vs-DRAM confound.** Partitioning automatically halves the per-socket working set. A naive partition "winning" could just be because of cache. The pipeline measures BVH bytes per socket and labels every data point as `cacheRes / DRAMbnd` based on the per-socket L3 capacity and DRAM capacities.
+- **Controlled NUMA distance.** A 4-socket Broadwell node (Sherlock `bigmem`) has SLIT distances `{10 local, 12 near, 32 far}`. We use `numactl --cpunodebind --membind` on a chosen socket pair to vary the inter-socket distance while keeping cores, clock, DRAM, scene, and threads identical. At times the node could be shared and it could be hard to isolate the effects of BVH placement; in such cases, the experiments were rerun to gain exclusive access to the node.
+- **Baseline.** Bonsai's emitted LLVM code was having issues on the Sherlock machine (mainly multi-threading-related issues when porting from ARM to x86). We implement a C++ baseline that is similar to the LLVM code generated by Bonsai. Further, we verify the handwritten C++ is performant by measuring it against Bonsai-generated code, and making sure all the schedules for the RTIOW implementation of the path tracer exist in the C++ implementation.
 
 ---
 
-## Project Tasks
+## 2. Approach
 
-### Task 1: Establish single-device baseline
-Reproduce Bonsai RTIOW closest-hit performance on:
-- Sherlock CPU backend
-- Apple M4 Pro CPU backend
+### 2.1 What we started with
 
-### Task 2: Build evaluation harness to identify beneficial regimes
-Design and run a harness varying:
-- scene size (`RTIOW_GRID_HALF`),
-- thread concurrency (`t1..tN` variants),
-- ray traffic (`RTIOW_SAMPLES`).
+We started with a C++ path tracer modeled on the kind of traversal kernel Bonsai emits. All experimentation — the four placement modes, the NUMA-local spinlock queue (for ray-queue cycling), the procedural hairball generator, the experiment-sweep driver code, and the gates — is work we built for this project. The sphere generator is taken from the driver code of Bonsai's RTIOW implementation.
 
-Collect:
-- wall-clock metrics,
-- structural metrics (`n_nodes`, `bvh_bytes`, etc.),
-- hardware counters (where available: L1D/L2 miss behavior, stall cycles).
+### 2.2 Placement strategies
 
-Goal: identify which regimes are bandwidth/latency constrained and therefore plausible targets for sharding/distribution.
+The renderer implements four data-placement modes. All four share the same traversal code, the same scene, and the same thread budget; they differ only in what bytes live where:
 
-### Task 3: Handwritten distributed RTIOW prototype + transfer-cost analysis
-Implement a distributed/sharded RTIOW path in handwritten runtime code (no compiler changes yet), and measure:
-- speedup/slowdown vs baseline,
-- ray transfer volume and penalty,
-- queue/sync overhead.
+![The four placement strategies, side by side: what each puts in local DRAM, and the regime in which each might win.](figures/06_strategies_combined.png)
 
-Goal: quantify the communication-vs-locality tradeoff directly.
+| | what's local on each socket | per-socket cost | wins when |
+|---|---|---|---|
+| **N** naive | BVH nodes interleaved across local and remote | `G / n_sockets` | not bandwidth-bound |
+| **R** replicate | full BVH + geometry (`numa_alloc_onnode`, first-touched) | `G` | bandwidth-bound + far remote |
+| **P** partition | half the triangles + BVH; rays cycled via local queue | `G / n_sockets` + queue | ray-forwarding cost < remote-fetch cost |
+| **H** node-hybrid | full interleaved tree + top-K BFS-ordered nodes copied per-socket | `G / n_sockets + hot_K` (~12 KB at K=8) | the *hot reused* data is the remote traffic |
 
-### Task 4: Two backend demonstration + abstraction proposal
-Demonstrate Task 3 on two machine backends with different memory hierarchies and derive a common abstraction suitable for future Bonsai/Scion integration.
+![Top-K node hybrid (H), in detail: each socket keeps its own local copy of the top BVH levels; the rest of the tree and the leaf geometry stay interleaved.](figures/06e_top_levels_schematic.png)
 
----
+We also implemented a `leafhybrid` replication variant that replicates the hot leaf geometry per socket, but investigating the failure of this mechanism has been left to later work.
 
-## Checkpoint 1 Status
+### 2.3 Workloads (the memory-bound contrast)
 
-### Backend status
-We target two backends with fundamentally different memory topologies. The M4 Pro has a flat unified memory with cache-level partitioning; Sherlock has physically separate DRAM pools connected by an explicit interconnect. Together they let us study the distribution question at two different scales of the memory hierarchy.
- 
-**Backend 1: Apple M4 Pro**
- 
-```
-┌─── Performance Cluster 0 ─────────────────┐  ┌─── Performance Cluster 1 ─────────────────┐
-│ Core 0   Core 1   Core 2   Core 3  Core 4 │  │ Core 5   Core 6   Core 7   Core 8  Core 9 │
-│ L1d:128K L1d:128K L1d:128K L1d:128K  128K │  │ L1d:128K L1d:128K L1d:128K L1d:128K  128K │
-│ (private, ~1ns)                           │  │ (private, ~1ns)                           │
-│               Shared L2: 16 MB            │  │               Shared L2: 16 MB            │
-│               (~4ns, 5 cores share)       │  │               (~4ns, 5 cores share)       │
-└───────────────────┬───────────────────────┘  └──────────────────┬────────────────────────┘
-                    │                                             │
-                    └─────────────┬───────────────────────────────┘
-                                  │
-                    ┌─────────────┴──────────────┐
-                    │   Unified DRAM (LPDDR5X)   │
-                    │   273 GB/s peak, ~80-100ns │
-                    │   24 or 48 GB              │
-                    └───────────────────────────-┘
- 
-              ┌───────────────────────────────────────┐
-              │       Efficiency Cluster              │
-              │ Core 10  Core 11  Core 12  Core 13    │
-              │ L1d:64K  L1d:64K  L1d:64K  L1d:64K    │
-              │           Shared L2: 4 MB             │
-              └───────────────────────────────────────┘
-```
- 
-Each core has a private L1 data cache (128 KB on perf cores). Five performance cores share a 16 MB L2. All cores share a single unified DRAM pool. Cache line size is 128 bytes (not 64 as on x86). 
+Two scenes chosen specifically to flip the memory-to-compute ratio:
 
-**Backend 2: Sherlock `sh02-01n58` (dual-socket NUMA)**
- 
-```
-┌──────────── Socket 0 (NUMA Node 0) ───────────┐     ┌──────────── Socket 1 (NUMA Node 1) ───────────┐
-│                                               │     │                                               │
-│  Core 0 ── L1d ──┐                            │     │  Core 48 ── L1d ──┐                           │
-│  Core 1 ── L1d ──┤                            │     │  Core 49 ── L1d ──┤                           │
-│  ...              ├── L2 (per-core, 1 MB)     │     │  ...               ├── L2 (per-core, 1 MB)    │
-│  Core 47 ── L1d ──┘                           │     │  Core 95 ── L1d ──┘                           │
-│                                               │     │                                               │
-│           Shared LLC: 30-60 MB                │     │           Shared LLC: 30-60 MB                │
-│           (~15-20ns)                          │     │           (~15-20ns)                          │
-│                  │                            │     │                  │                            │
-│        Memory Controller (IMC 0)              │     │        Memory Controller (IMC 1)              │
-│                  │                            │     │                  │                            │
-│           DRAM 0: 96 GB                       │     │           DRAM 1: 96 GB                       │
-│           ~100 GB/s, ~80ns                    │     │           ~100 GB/s, ~80ns                    |
-│                                               │     │                                               │
-└──────────────────┬────────────────────────────┘     └───────────────────┬───────────────────────────┘
-                   │                                                      │
-                   │                UPI Interconnect                      │
-                   │              ~50 GB/s per direction                  │
-                   │              ~140-180ns round trip                   │
-                   └──────────────────────────────────────────────────────┘
-```
- 
-Each socket has its own physical DRAM pool attached via its own integrated memory controller. The two sockets are connected by UPI (Ultra Path Interconnect). A thread on socket 0 can access DRAM 1, but the cache line must traverse UPI, paying ~140-180 ns instead of ~80 ns for local DRAM, and consuming limited UPI bandwidth (~50 GB/s) instead of local DRAM bandwidth (~100 GB/s). The OS exposes both pools as a single virtual address space; `numactl` and `mbind` control physical page placement. 
+- **Spheres** — analytic Ray-Tracing-in-One-Weekend grid (lambertian / metal / dielectric). Each hit costs ≈ 1 cache line (the sphere record). Primarily compute-bound.
+- **Hairball** — a procedurally grown ball of tangled triangle tubes, generated by `gen_hairball(n_strands, segs, sides, seed)`: each strand starts on a small sphere, advances as a curled random walk (`segs` steps, Gaussian directional jitter), and is thickened into a tube ring of `sides` vertices that triangulates into `segs × sides × 2` triangles. Each leaf hit reads a triangle (16 B) plus its 3 vertices (24 B each — position + normal) ≈ 7 cache lines/hit. The strands physically overlap, so the BVH has overlapping leaves and high traversal cost. Primarily memory-bound.
 
-### Workload status
-- Current workload: RTIOW spheres.
-- Observation: RTIOW sphere scenes can be have small per-ray hot set, coherent traversal to strongly expose distribution benefits.
-- Next workload class: memory-heavier/divergence-heavy scenes (e.g., hair/curve-rich scenes) to stress cache/bandwidth behavior more realistically.
+| ![Spheres](figures/02_render_spheres.png) | ![Hairball](figures/02_render_hairball.png) |
+|:---:|:---:|
+| **Spheres** — compute-bound, ~1 line/hit | **Hairball** — memory-bound, ~7 lines/hit |
 
-### Harness status
-Implemented under for L2<->L1 for the case of M4 Pro ([README](https://github.com/sgauthamr2001/bonsai/tree/main/apps/rtiow/cpu/bench)):
+Both scenes are parameterised so the working set sweeps from cache-resident (≈ 28 MB BVH) up to ≈ 786 MB BVH (for hairball, 6000 strands × 120 segs × 12 sides = 17.3 M triangles, close to the renderer's 2²⁸ primitive capacity).
 
-`code/bonsai/apps/rtiow/cpu/bench/`
+### 2.4 Correctness machinery
 
-Includes:
-- `run_grid_sweep.sh`
-- `run_thread_sweep.sh`
-- `run_samples_sweep.sh`
-- CSV parsing/aggregation scripts
-- plotting scripts for grid/thread/samples curves
-- optional counter capture wrapper (`run_xctrace.sh`)
+A deterministic configuration (depth-1, compute-light, no scatter RNG, so thread order can't perturb the output) is run before every experiment; the resulting PPM is md5-compared across every mode and queue mechanism. We verify `naive == replicate == partition == hybrid` across scenes. The Monte-Carlo renders are not bit-identical — that can be because of sampling noise, not placement.
 
-### Current interpretation
-- To get the harness working it was implemented for L2<->L1 level, initial samples scaling appears close to linear on current RTIOW settings, suggesting no strong evidence yet that L2<->L1 bandwidth contention dominates.
-- Therefore, checkpoint result is **not** “distribution helps now,” but they are rather placeholder plots indicating how:
-  - the evaluation infrastructure is run,
-  - baseline behavior is characterized,
-  - criteria for deciding when distribution/sharding can be justified. 
+### 2.5 What we tried that did not work (and how it shaped the design)
+
+- We first built the ray queue with a `std::mutex` + `condition_variable`, but the kernel-lock and wakeup overhead per cross-socket ray dominated partition's render time, swamping the NUMA signal we were trying to measure.
+- We replaced it with a NUMA-local spinlock + spin-poll queue whose storage is first-touched on the consumer socket so dequeues stay local, and verified in a deterministic config that both implementations produce bit-identical images — so the new queue is strictly faster, not subtly broken.
+- Asymmetric compute (1× vs 2× threads). Early checkpoints unfairly gave partition both sockets while naive used one. Fixed with **equal 2× threads** across all strategies; spawned-worker counts logged per cell so fairness is auditable.
+- Texture-overlay bandwidth pressure. A pool of random texture lookups at each hit was meant to push the renderer toward bandwidth-bound, but lookups can be too rare. Hence this was replaced by simply scaling scene size (sweeping past L3).
+- Top-K *node* replication (H), built on the intuition that the top of the tree is hot. The result was ≈ N — the top nodes are *cache-resident*, not bandwidth-hot. We therefore experimented with replicating the leaf nodes.
+- Leaf-by-hotness *reorder*. Packed hot vertices into a contiguous prefix. This appears to scatter every triangle's three vertices across cache lines and kill the prefetcher; it ran ≈ **2× slower** than naive.
+- Leaf-by-hotness *slot map*. Kept vertices in original strand order and added a shared `int32 vslot[]` indirection. The implementation does not yet give coherent results, and we leave the investigation to future work.
+
+### 2.6 Compute / memory mapping
+
+The renderer pins one worker thread per logical CPU in the bound cpuset, partitions the framebuffer into per-socket ray queues, and uses first-touch to bind the BVH (or its copies / hot prefix) and the queue's path storage to local DRAM. Workers are spread evenly across both sockets so both memory controllers stay active. The same scalar inner loop runs in every mode.
+
+### 2.7 Experiments
+
+The following experiments are run, each isolating one variable:
+
+- **E1 — raw NUMA penalty (`numa_probe`).** Pointer-chase latency + STREAM-triad bandwidth, local vs cross-socket at distances 12 and 32. Establishes the budget any strategy is fighting for.
+- **E2 — placement matrix × scene-size sweep.** All four modes × two scenes × distance {near, far} × five scene sizes × 3-rep median; equal threads, local queue, correctness-gated. Tests when (and which) placement helps.
 
 ---
 
-## Planned next steps (post-checkpoint)
+## 3. Evaluation and Results
 
-1. Run counter-backed analysis on selected anchors (small/mid/large grid, low/high thread count).
-2. Add memory-heavier benchmark scenes (hair/curve-like or similarly irregular geometry/material access).
-3. Extend Bonsai’s tree representation to use 32-bit node indices so stress tests can exceed today’s scene-size limits without failure. Bigger scenes lengthen each run, so the evaluation needs to be carefully designed to avoid large design and testing times. For that reason, we build the harness at L2 <-> L1D level first. The CPU harness was exercised on Apple Silicon; threading via GCD may require checks or small portability fixes on Intel (Sherlock). (Similar fixes were required to run Bonsai on Sherlock).
-4. Implement handwritten sharded/distributed prototype and measure ray movement overhead explicitly.
-5. Compare two backends and come up with a portable abstraction.
+### 3.1 Definition of success
+
+Success here is **not** a speedup number. It is a build-or-don't-build recommendation per workload regime, with the confounds ruled out, against the baseline implementation. The experiments either support or falsify the hypothesis in §1.2.
+
+### 3.2 Experimental setup
+
+- **Machine.** Stanford Sherlock `bigmem` partition, sh02-12-class node — 4-socket Broadwell, 128 logical CPUs, SLIT `{10, 12, 32}`. `--cpus-per-task=64`, `--mem=256G`, no `--exclusive` (bigmem disallows it).
+- **NUMA control.** `numactl --cpunodebind=0,N --membind=0,N` selects the socket pair; the near pair is `{0,1}` (dist 12), the far pair is `{0,2}` (dist 32).
+- **Baseline.** C++ path tracer with simple interleaving across DRAM nodes.
+- **Metric.** `render_ms` — the steady-state render loop only, median of 3 reps. Build time is logged separately (§3.5).
+- **Scene sweep.** Spheres `grid_half ∈ {100, 300, 500, 800, 1200}`. Hairball `strands ∈ {200, 800, 1600, 3000, 6000}`. Per-socket BVH spans 28 MB → 786 MB for hairball; L3 ≈ 40 MB.
+
+### 3.3 E1 — the budget every strategy must recover
+
+![Remote-access penalty (E1).](figures/01_remote_penalty.png)
+
+| dist | latency vs local | bandwidth vs local |
+|-----:|:----------------:|:------------------:|
+| 12 (near) | **1.14×** | **0.99×** |
+| 32 (far)  | **1.76×** | **0.61×** |
+
+The near distance is essentially a latency tax. The far distance is a **39 % bandwidth wall**. Any placement strategy can only deliver up to roughly this gap, and only when the workload is bandwidth-bound.
+
+### 3.4 E2 — result matrix for hairball scene and plots for hairball/sphere
+
+Median `render_ms` ratios vs naive on the memory-bound hairball; all strategies use the full machine:
+
+```
+            R/N                P/N                H/N
+size   near    far       near    far        near    far
+ 800   0.81    0.83      0.90    1.01       0.86    0.96
+1600   0.97    0.79      0.99    1.04       0.94    0.97
+3000   0.93    0.76      1.15    1.16       0.99    0.98
+6000   0.88    0.75      1.27    1.25       1.01    0.98
+```
+
+For the compute-bound spheres, most ratios (R/N, P/N, H/N) sit at ≈ 1.0 across every size and distance.
+
+![Replicate (R) — same DRAM footprint, opposite outcome on the two workloads.](figures/07_results_R.png)
+
+![Partition + ray-cycle (P) — loses on single-node NUMA; worsens with scene size.](figures/07_results_P.png)
+
+![Top-K node hybrid (H) — limited benefit on either workload.](figures/07_results_H.png)
+
+**Interpretation**
+
+- **R wins, and the win grows with both size and distance.** At hairball-6000 far, replication is **25 % faster** than naive, and the ratio tracks the 39 % bandwidth penalty measured in E1. The cleanest single comparison is at approximately *matched per-socket footprint*: spheres at 364 MB (R/N = 0.94, single-cell noise) vs hairball at 393 MB (R/N = 0.76). The data on each socket is the same size; what differs is **how memory-intensive each hit is**. That falsifies the simpler "more memory ⇒ replication helps" story — what matters is **bandwidth-intensity per hit**.
+- **P loses, and *worsens* with size.** Partition trades remote *data* fetches for cross-socket *ray* forwarding; the forwarding rate roughly doubles (2.0 → 4.0 rays/path) as the scene grows and more rays cross between sockets. On this tightly coupled node the forwarding cost dominates, and it grows with size while the locality saving per ray does not.
+- **H ≈ N.** Replicating the top-8 BVH levels (~12 KB) costs near zero and saves near zero, because the top nodes are touched by *every* ray, so they live in L1/L2 and produce ≈ 0 DRAM traffic. The bandwidth bill is in the **leaves**, which H leaves interleaved. However, gains from replicating can be seen at the near distance, where the only remote cost is latency (1.14×), not bandwidth (0.99×), and the top-K BVH nodes are pure latency-bound pointer-chases that every ray performs, so making them local reduces the latency for small scenes. In these small scenes, upper-tree traversal is a non-trivial fraction of per-ray time, so eliminating those remote latency stalls actually moves the needle. As scene size grows, leaf-fetch bandwidth dominates total time and H can't touch leaves, so its small upper-tree win becomes a vanishing fraction, and H/N drifts back to ~1.0.
+
+### 3.5 Caveat — build amortization
+
+![Build amortization for replicate vs naive (hairball 6000, far).](figures/08_build_amortization.png)
+
+The R ratios are render-time. Replication builds the BVH **once per socket**, so its setup is ≈ 1.8× naive's. At hairball-6000 far:
+
+```
+                 setup (s)   render/frame (s)
+ naive               9.6        5.26
+ replicate          18.2        3.96
+ break-even        ≈ 7 frames rendered from the same BVH
+```
+
+For animation, progressive sampling, or any pipeline that renders many frames from one tree, render_ms is the right metric and R wins overall. For a single one-shot still, build matters and naive wins. The deck reports render_ms and labels this caveat explicitly.
+
+### 3.6 Hot-leaf replication
+
+Since the bandwidth bill is in the leaves rather than the upper tree, the natural cheap variant of R is to replicate only the *hot* leaf geometry per socket. A profiling pass over primary rays attributes leaf-node visits to the vertices each leaf references, ranks the vertices by access count, and selects the top fraction; the renderer is extended with a `leafhybrid` mode that places only those hot vertices in per-socket local DRAM and leaves the rest interleaved. This has been left as later work, as the existing implementation was not giving coherent results.
+
+### 3.7 What limited the win
+
+- **R** is limited by the raw NUMA bandwidth gap (E1). At near, the gap is ~1 %, so R can't deliver; at far it's 39 %, and R captures most of it as the working set grows.
+- **P** is limited by **ray-forwarding throughput** on the shared interconnect — measured by `fwd_rate`, which doubles from small to large scenes. The harder fundamental cost is the link itself. This can be more evident, and partitioning can win, if we are performing out-of-core / disk access or operating in a truly distributed setting in which we are making an out-of-socket access.
+- **H** is limited by **access distribution**: it replicates exactly the bytes that were never DRAM-bound to begin with.
+
+### 4. Summary
+
+The hypothesis — that NUMA-aware placement gives a non-negligible speedup over interleave — is:
+
+- **Supported** for **full BVH replication** on **memory-bound, L3-spilling** workloads at **NUMA distances large enough to show a real bandwidth gap** (up to **25 % at far** on hairball-6000, scaling with both size and distance).
+- **Falsified** for **single-node, equal-thread partition + ray-cycle** (P/N ≥ 1.0; gets worse with size).
+- **Falsified** for **top-K node-hybrid** (H ≈ N — replicates cache-resident data).
+- **Irrelevant** for **compute-bound workloads** (no remote bandwidth to recover — all ratios ≈ 1.0 regardless of working-set size).
 
 ---
 
-## Repository Structure
+## 5. References
 
-Bonsai is included as a Git submodule at `code/bonsai` ([sgauthamr2001/bonsai](https://github.com/sgauthamr2001/bonsai))
-
-After cloning this project, initialize submodules:
-
-```bash
-git submodule update --init --recursive
-```
-
-Or clone with submodules in one step:
-
-```bash
-git clone --recurse-submodules <url-of-this-repo>
-```
-```
-cs348k-project/
-├── code/bonsai/             # Submodule: Bonsai compiler + RTIOW benchmark harness
-├── checkpoint_2             # Files and document for checkpoint2
-├── README.md                # Project README (this file)
-```
----
-
-## Checkpoint-2: 
-Described here: ([Checkpoint-2](https://github.com/sgauthamr2001/cs348k_project/tree/main/checkpoint_2))
+- Root, AJ et al. *Bonsai: a DSL for recursive geometric queries*. PLDI 2026.
+- Fouladi, Sadjad, et al. *R2E2: Low-Latency Path Tracing of Terabyte-Scale Scenes using Thousands of Cloud CPUs* SIGGRAPH Asia 2023.
+- Wald, Ingo, et al. *Data Parallel Multi-GPU Path Tracing using Ray Queue Cycling* Computer Graphics Forum 2023. 
+- Pharr, Jakob, Humphreys. *Physically Based Rendering: From Theory to Implementation,* 4th ed. for BVH construction, Möller-Trumbore intersection, scene conventions.
+- Shirley, Peter, et al. *Ray Tracing in One Weekend* for the analytic spheres scene.

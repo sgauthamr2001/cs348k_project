@@ -1,0 +1,434 @@
+######################################################################
+# FINAL experiment  job=27297204  node=sh03-12n18.int  date=Tue Jun  2 00:55:59 PDT 2026
+######################################################################
+nproc=64
+node distances:
+node   0   1   2   3 
+  0:  10  12  32  32 
+  1:  12  10  32  32 
+  2:  32  32  10  12 
+  3:  32  32  12  10 
+/share/software/user/open/gcc/14.2.0/bin/g++
+g++ (GCC) 14.2.0
+====================================================================
+ FINAL experiment  host=sh03-12n18.int  date=Tue Jun  2 00:56:00 PDT 2026
+====================================================================
+node distances:
+node   0   1   2   3 
+  0:  10  12  32  32 
+  1:  12  10  32  32 
+  2:  32  32  10  12 
+  3:  32  32  12  10 
+nproc(cpuset)=64 numa_nodes=4
+
+[build]
+  binaries ready
+  near 0,1 (dist 12)   far 0,2 (dist 32)
+  X=16 per node, full-machine pair uses 2X=32 threads (all modes equal)
+
+############ E1: NUMA penalty profiler (latency + bandwidth) ############
+NUMA_PROBE nodes=4 lat_buf=512MB bw_arr=1024MB chase_steps=100000000
+--- node distances (SLIT) ---
+node distances:
+node   0   1   2   3 
+  0:  10  12  32  32 
+  1:  12  10  32  32 
+  2:  32  32  10  12 
+  3:  32  32  12  10 
+
+LATENCY (thread on node 0, ns/dependent-load):
+  dataNode ns/access  vs_local   note    
+  0        127.60     1.00x      LOCAL
+  1        145.02     1.14x      cross
+  2        224.57     1.76x      cross
+  3        221.96     1.74x      cross
+
+BANDWIDTH (16 threads on node 0, GB/s triad):
+  dataNode GB/s       vs_local   note    
+  0        32.25      1.00x      LOCAL
+  1        32.04      0.99x      cross
+  2        19.82      0.61x      cross
+  3        22.34      0.69x      cross
+
+NP_DONE
+
+############ correctness gate (mutex vs local must bit-match) ############
+  rtiow_spheres GATE OK ()
+  rtiow_hairball GATE OK ()
+  per-socket L3 = 256 MB (working-set threshold for cache vs NUMA)
+
+############ E2: placement matrix (N/R/P/H) x SCENE-SIZE, both scenes (depth=5) ############
+  ===== rep 1 =====
+    r1 spheres  sz=100   naive near sp=32   bvh=3    MB render=203    
+    r1 spheres  sz=100   replicate near sp=32   bvh=3    MB render=215    
+    r1 spheres  sz=100   partition near sp=32   bvh=1    MB render=255    
+    r1 spheres  sz=100   hybrid near sp=32   bvh=3    MB render=303    
+    r1 spheres  sz=100   naive far  sp=28   bvh=3    MB render=296    
+    r1 spheres  sz=100   replicate far  sp=28   bvh=3    MB render=306    
+    r1 spheres  sz=100   partition far  sp=28   bvh=1    MB render=326    
+    r1 spheres  sz=100   hybrid far  sp=28   bvh=3    MB render=306    
+    r1 spheres  sz=300   naive near sp=32   bvh=23   MB render=249    
+    r1 spheres  sz=300   replicate near sp=32   bvh=23   MB render=243    
+    r1 spheres  sz=300   partition near sp=32   bvh=11   MB render=262    
+    r1 spheres  sz=300   hybrid near sp=32   bvh=23   MB render=223    
+    r1 spheres  sz=300   naive far  sp=28   bvh=23   MB render=409    
+    r1 spheres  sz=300   replicate far  sp=28   bvh=23   MB render=410    
+    r1 spheres  sz=300   partition far  sp=28   bvh=11   MB render=395    
+    r1 spheres  sz=300   hybrid far  sp=28   bvh=23   MB render=326    
+    r1 spheres  sz=500   naive near sp=32   bvh=56   MB render=269    
+    r1 spheres  sz=500   replicate near sp=32   bvh=56   MB render=269    
+    r1 spheres  sz=500   partition near sp=32   bvh=28   MB render=286    
+    r1 spheres  sz=500   hybrid near sp=32   bvh=56   MB render=226    
+    r1 spheres  sz=500   naive far  sp=28   bvh=56   MB render=465    
+    r1 spheres  sz=500   replicate far  sp=28   bvh=56   MB render=364    
+    r1 spheres  sz=500   partition far  sp=28   bvh=28   MB render=405    
+    r1 spheres  sz=500   hybrid far  sp=28   bvh=56   MB render=354    
+    r1 spheres  sz=800   naive near sp=32   bvh=165  MB render=283    
+    r1 spheres  sz=800   replicate near sp=32   bvh=165  MB render=250    
+    r1 spheres  sz=800   partition near sp=32   bvh=83   MB render=302    
+    r1 spheres  sz=800   hybrid near sp=32   bvh=165  MB render=303    
+    r1 spheres  sz=800   naive far  sp=28   bvh=165  MB render=366    
+    r1 spheres  sz=800   replicate far  sp=28   bvh=165  MB render=364    
+    r1 spheres  sz=800   partition far  sp=28   bvh=83   MB render=386    
+    r1 spheres  sz=800   hybrid far  sp=28   bvh=165  MB render=364    
+    r1 spheres  sz=1200  naive near sp=32   bvh=364  MB render=276    
+    r1 spheres  sz=1200  replicate near sp=32   bvh=364  MB render=263    
+    r1 spheres  sz=1200  partition near sp=32   bvh=182  MB render=334    
+    r1 spheres  sz=1200  hybrid near sp=32   bvh=364  MB render=265    
+    r1 spheres  sz=1200  naive far  sp=28   bvh=364  MB render=371    
+    r1 spheres  sz=1200  replicate far  sp=28   bvh=364  MB render=331    
+    r1 spheres  sz=1200  partition far  sp=28   bvh=182  MB render=471    
+    r1 spheres  sz=1200  hybrid far  sp=28   bvh=364  MB render=364    
+    r1 hairball sz=200   naive near sp=32   bvh=28   MB render=416    
+    r1 hairball sz=200   replicate near sp=32   bvh=28   MB render=423    
+    r1 hairball sz=200   partition near sp=32   bvh=17   MB render=423    
+    r1 hairball sz=200   hybrid near sp=32   bvh=28   MB render=370    
+    r1 hairball sz=200   naive far  sp=28   bvh=28   MB render=436    
+    r1 hairball sz=200   replicate far  sp=28   bvh=28   MB render=427    
+    r1 hairball sz=200   partition far  sp=28   bvh=17   MB render=497    
+    r1 hairball sz=200   hybrid far  sp=28   bvh=28   MB render=420    
+    r1 hairball sz=800   naive near sp=32   bvh=112  MB render=1233   
+    r1 hairball sz=800   replicate near sp=32   bvh=112  MB render=1166   
+    r1 hairball sz=800   partition near sp=32   bvh=69   MB render=1278   
+    r1 hairball sz=800   hybrid near sp=32   bvh=112  MB render=1447   
+    r1 hairball sz=800   naive far  sp=28   bvh=112  MB render=1679   
+    r1 hairball sz=800   replicate far  sp=28   bvh=112  MB render=1400   
+    r1 hairball sz=800   partition far  sp=28   bvh=69   MB render=1690   
+    r1 hairball sz=800   hybrid far  sp=28   bvh=112  MB render=1641   
+    r1 hairball sz=1600  naive near sp=32   bvh=224  MB render=2343   
+    r1 hairball sz=1600  replicate near sp=32   bvh=224  MB render=2911   
+    r1 hairball sz=1600  partition near sp=32   bvh=139  MB render=2309   
+    r1 hairball sz=1600  hybrid near sp=32   bvh=224  MB render=2170   
+    r1 hairball sz=1600  naive far  sp=28   bvh=224  MB render=3165   
+    r1 hairball sz=1600  replicate far  sp=28   bvh=224  MB render=2484   
+    r1 hairball sz=1600  partition far  sp=28   bvh=139  MB render=3280   
+    r1 hairball sz=1600  hybrid far  sp=28   bvh=224  MB render=3055   
+    r1 hairball sz=3000  naive near sp=32   bvh=393  MB render=3031   
+    r1 hairball sz=3000  replicate near sp=32   bvh=393  MB render=2972   
+    r1 hairball sz=3000  partition near sp=32   bvh=246  MB render=3483   
+    r1 hairball sz=3000  hybrid near sp=32   bvh=393  MB render=3153   
+    r1 hairball sz=3000  naive far  sp=28   bvh=393  MB render=4452   
+    r1 hairball sz=3000  replicate far  sp=28   bvh=393  MB render=3433   
+    r1 hairball sz=3000  partition far  sp=28   bvh=246  MB render=5171   
+    r1 hairball sz=3000  hybrid far  sp=28   bvh=393  MB render=4324   
+    r1 hairball sz=6000  naive near sp=32   bvh=786  MB render=3776   
+    r1 hairball sz=6000  replicate near sp=32   bvh=786  MB render=3113   
+    r1 hairball sz=6000  partition near sp=32   bvh=492  MB render=4476   
+    r1 hairball sz=6000  hybrid near sp=32   bvh=786  MB render=3715   
+    r1 hairball sz=6000  naive far  sp=28   bvh=786  MB render=5263   
+    r1 hairball sz=6000  replicate far  sp=28   bvh=786  MB render=3956   
+    r1 hairball sz=6000  partition far  sp=28   bvh=492  MB render=6725   
+    r1 hairball sz=6000  hybrid far  sp=28   bvh=786  MB render=5145   
+  ===== rep 2 =====
+    r2 spheres  sz=100   naive near sp=32   bvh=3    MB render=203    
+    r2 spheres  sz=100   replicate near sp=32   bvh=3    MB render=223    
+    r2 spheres  sz=100   partition near sp=32   bvh=1    MB render=249    
+    r2 spheres  sz=100   hybrid near sp=32   bvh=3    MB render=303    
+    r2 spheres  sz=100   naive far  sp=28   bvh=3    MB render=311    
+    r2 spheres  sz=100   replicate far  sp=28   bvh=3    MB render=305    
+    r2 spheres  sz=100   partition far  sp=28   bvh=1    MB render=355    
+    r2 spheres  sz=100   hybrid far  sp=28   bvh=3    MB render=305    
+    r2 spheres  sz=300   naive near sp=32   bvh=23   MB render=243    
+    r2 spheres  sz=300   replicate near sp=32   bvh=23   MB render=250    
+    r2 spheres  sz=300   partition near sp=32   bvh=11   MB render=262    
+    r2 spheres  sz=300   hybrid near sp=32   bvh=23   MB render=223    
+    r2 spheres  sz=300   naive far  sp=28   bvh=23   MB render=418    
+    r2 spheres  sz=300   replicate far  sp=28   bvh=23   MB render=427    
+    r2 spheres  sz=300   partition far  sp=28   bvh=11   MB render=386    
+    r2 spheres  sz=300   hybrid far  sp=28   bvh=23   MB render=326    
+    r2 spheres  sz=500   naive near sp=32   bvh=56   MB render=275    
+    r2 spheres  sz=500   replicate near sp=32   bvh=56   MB render=276    
+    r2 spheres  sz=500   partition near sp=32   bvh=28   MB render=286    
+    r2 spheres  sz=500   hybrid near sp=32   bvh=56   MB render=260    
+    r2 spheres  sz=500   naive far  sp=28   bvh=56   MB render=450    
+    r2 spheres  sz=500   replicate far  sp=28   bvh=56   MB render=408    
+    r2 spheres  sz=500   partition far  sp=28   bvh=28   MB render=391    
+    r2 spheres  sz=500   hybrid far  sp=28   bvh=56   MB render=356    
+    r2 spheres  sz=800   naive near sp=32   bvh=165  MB render=290    
+    r2 spheres  sz=800   replicate near sp=32   bvh=165  MB render=243    
+    r2 spheres  sz=800   partition near sp=32   bvh=83   MB render=302    
+    r2 spheres  sz=800   hybrid near sp=32   bvh=165  MB render=303    
+    r2 spheres  sz=800   naive far  sp=28   bvh=165  MB render=369    
+    r2 spheres  sz=800   replicate far  sp=28   bvh=165  MB render=345    
+    r2 spheres  sz=800   partition far  sp=28   bvh=83   MB render=402    
+    r2 spheres  sz=800   hybrid far  sp=28   bvh=165  MB render=350    
+    r2 spheres  sz=1200  naive near sp=32   bvh=364  MB render=243    
+    r2 spheres  sz=1200  replicate near sp=32   bvh=364  MB render=263    
+    r2 spheres  sz=1200  partition near sp=32   bvh=182  MB render=322    
+    r2 spheres  sz=1200  hybrid near sp=32   bvh=364  MB render=243    
+    r2 spheres  sz=1200  naive far  sp=28   bvh=364  MB render=356    
+    r2 spheres  sz=1200  replicate far  sp=28   bvh=364  MB render=334    
+    r2 spheres  sz=1200  partition far  sp=28   bvh=182  MB render=445    
+    r2 spheres  sz=1200  hybrid far  sp=28   bvh=364  MB render=368    
+    r2 hairball sz=200   naive near sp=32   bvh=28   MB render=336    
+    r2 hairball sz=200   replicate near sp=32   bvh=28   MB render=363    
+    r2 hairball sz=200   partition near sp=32   bvh=17   MB render=444    
+    r2 hairball sz=200   hybrid near sp=32   bvh=28   MB render=370    
+    r2 hairball sz=200   naive far  sp=28   bvh=28   MB render=439    
+    r2 hairball sz=200   replicate far  sp=28   bvh=28   MB render=443    
+    r2 hairball sz=200   partition far  sp=28   bvh=17   MB render=476    
+    r2 hairball sz=200   hybrid far  sp=28   bvh=28   MB render=422    
+    r2 hairball sz=800   naive near sp=32   bvh=112  MB render=1413   
+    r2 hairball sz=800   replicate near sp=32   bvh=112  MB render=1138   
+    r2 hairball sz=800   partition near sp=32   bvh=69   MB render=1265   
+    r2 hairball sz=800   hybrid near sp=32   bvh=112  MB render=1219   
+    r2 hairball sz=800   naive far  sp=28   bvh=112  MB render=1675   
+    r2 hairball sz=800   replicate far  sp=28   bvh=112  MB render=1370   
+    r2 hairball sz=800   partition far  sp=28   bvh=69   MB render=1719   
+    r2 hairball sz=800   hybrid far  sp=28   bvh=112  MB render=1615   
+    r2 hairball sz=1600  naive near sp=32   bvh=224  MB render=2393   
+    r2 hairball sz=1600  replicate near sp=32   bvh=224  MB render=2277   
+    r2 hairball sz=1600  partition near sp=32   bvh=139  MB render=2397   
+    r2 hairball sz=1600  hybrid near sp=32   bvh=224  MB render=2390   
+    r2 hairball sz=1600  naive far  sp=28   bvh=224  MB render=3133   
+    r2 hairball sz=1600  replicate far  sp=28   bvh=224  MB render=2413   
+    r2 hairball sz=1600  partition far  sp=28   bvh=139  MB render=3385   
+    r2 hairball sz=1600  hybrid far  sp=28   bvh=224  MB render=3067   
+    r2 hairball sz=3000  naive near sp=32   bvh=393  MB render=3285   
+    r2 hairball sz=3000  replicate near sp=32   bvh=393  MB render=2832   
+    r2 hairball sz=3000  partition near sp=32   bvh=246  MB render=3494   
+    r2 hairball sz=3000  hybrid near sp=32   bvh=393  MB render=3012   
+    r2 hairball sz=3000  naive far  sp=28   bvh=393  MB render=4429   
+    r2 hairball sz=3000  replicate far  sp=28   bvh=393  MB render=3355   
+    r2 hairball sz=3000  partition far  sp=28   bvh=246  MB render=5119   
+    r2 hairball sz=3000  hybrid far  sp=28   bvh=393  MB render=4300   
+    r2 hairball sz=6000  naive near sp=32   bvh=786  MB render=3532   
+    r2 hairball sz=6000  replicate near sp=32   bvh=786  MB render=3093   
+    r2 hairball sz=6000  partition near sp=32   bvh=492  MB render=4476   
+    r2 hairball sz=6000  hybrid near sp=32   bvh=786  MB render=3553   
+    r2 hairball sz=6000  naive far  sp=28   bvh=786  MB render=5263   
+    r2 hairball sz=6000  replicate far  sp=28   bvh=786  MB render=3980   
+    r2 hairball sz=6000  partition far  sp=28   bvh=492  MB render=6565   
+    r2 hairball sz=6000  hybrid far  sp=28   bvh=786  MB render=5120   
+  ===== rep 3 =====
+    r3 spheres  sz=100   naive near sp=32   bvh=3    MB render=205    
+    r3 spheres  sz=100   replicate near sp=32   bvh=3    MB render=205    
+    r3 spheres  sz=100   partition near sp=32   bvh=1    MB render=255    
+    r3 spheres  sz=100   hybrid near sp=32   bvh=3    MB render=315    
+    r3 spheres  sz=100   naive far  sp=28   bvh=3    MB render=319    
+    r3 spheres  sz=100   replicate far  sp=28   bvh=3    MB render=307    
+    r3 spheres  sz=100   partition far  sp=28   bvh=1    MB render=343    
+    r3 spheres  sz=100   hybrid far  sp=28   bvh=3    MB render=322    
+    r3 spheres  sz=300   naive near sp=32   bvh=23   MB render=247    
+    r3 spheres  sz=300   replicate near sp=32   bvh=23   MB render=229    
+    r3 spheres  sz=300   partition near sp=32   bvh=11   MB render=278    
+    r3 spheres  sz=300   hybrid near sp=32   bvh=23   MB render=263    
+    r3 spheres  sz=300   naive far  sp=28   bvh=23   MB render=343    
+    r3 spheres  sz=300   replicate far  sp=28   bvh=23   MB render=314    
+    r3 spheres  sz=300   partition far  sp=28   bvh=11   MB render=362    
+    r3 spheres  sz=300   hybrid far  sp=28   bvh=23   MB render=342    
+    r3 spheres  sz=500   naive near sp=32   bvh=56   MB render=276    
+    r3 spheres  sz=500   replicate near sp=32   bvh=56   MB render=243    
+    r3 spheres  sz=500   partition near sp=32   bvh=28   MB render=294    
+    r3 spheres  sz=500   hybrid near sp=32   bvh=56   MB render=344    
+    r3 spheres  sz=500   naive far  sp=28   bvh=56   MB render=365    
+    r3 spheres  sz=500   replicate far  sp=28   bvh=56   MB render=344    
+    r3 spheres  sz=500   partition far  sp=28   bvh=28   MB render=385    
+    r3 spheres  sz=500   hybrid far  sp=28   bvh=56   MB render=373    
+    r3 spheres  sz=800   naive near sp=32   bvh=165  MB render=244    
+    r3 spheres  sz=800   replicate near sp=32   bvh=165  MB render=366    
+    r3 spheres  sz=800   partition near sp=32   bvh=83   MB render=332    
+    r3 spheres  sz=800   hybrid near sp=32   bvh=165  MB render=283    
+    r3 spheres  sz=800   naive far  sp=28   bvh=165  MB render=350    
+    r3 spheres  sz=800   replicate far  sp=28   bvh=165  MB render=343    
+    r3 spheres  sz=800   partition far  sp=28   bvh=83   MB render=435    
+    r3 spheres  sz=800   hybrid far  sp=28   bvh=165  MB render=363    
+    r3 spheres  sz=1200  naive near sp=32   bvh=364  MB render=223    
+    r3 spheres  sz=1200  replicate near sp=32   bvh=364  MB render=230    
+    r3 spheres  sz=1200  partition near sp=32   bvh=182  MB render=335    
+    r3 spheres  sz=1200  hybrid near sp=32   bvh=364  MB render=256    
+    r3 spheres  sz=1200  naive far  sp=28   bvh=364  MB render=343    
+    r3 spheres  sz=1200  replicate far  sp=28   bvh=364  MB render=346    
+    r3 spheres  sz=1200  partition far  sp=28   bvh=182  MB render=448    
+    r3 spheres  sz=1200  hybrid far  sp=28   bvh=364  MB render=350    
+    r3 hairball sz=200   naive near sp=32   bvh=28   MB render=321    
+    r3 hairball sz=200   replicate near sp=32   bvh=28   MB render=344    
+    r3 hairball sz=200   partition near sp=32   bvh=17   MB render=497    
+    r3 hairball sz=200   hybrid near sp=32   bvh=28   MB render=367    
+    r3 hairball sz=200   naive far  sp=28   bvh=28   MB render=450    
+    r3 hairball sz=200   replicate far  sp=28   bvh=28   MB render=412    
+    r3 hairball sz=200   partition far  sp=28   bvh=17   MB render=491    
+    r3 hairball sz=200   hybrid far  sp=28   bvh=28   MB render=416    
+    r3 hairball sz=800   naive near sp=32   bvh=112  MB render=1832   
+    r3 hairball sz=800   replicate near sp=32   bvh=112  MB render=1141   
+    r3 hairball sz=800   partition near sp=32   bvh=69   MB render=1266   
+    r3 hairball sz=800   hybrid near sp=32   bvh=112  MB render=1199   
+    r3 hairball sz=800   naive far  sp=28   bvh=112  MB render=1647   
+    r3 hairball sz=800   replicate far  sp=28   bvh=112  MB render=1394   
+    r3 hairball sz=800   partition far  sp=28   bvh=69   MB render=1687   
+    r3 hairball sz=800   hybrid far  sp=28   bvh=112  MB render=1614   
+    r3 hairball sz=1600  naive near sp=32   bvh=224  MB render=2297   
+    r3 hairball sz=1600  replicate near sp=32   bvh=224  MB render=1898   
+    r3 hairball sz=1600  partition near sp=32   bvh=139  MB render=2312   
+    r3 hairball sz=1600  hybrid near sp=32   bvh=224  MB render=2211   
+    r3 hairball sz=1600  naive far  sp=28   bvh=224  MB render=3139   
+    r3 hairball sz=1600  replicate far  sp=28   bvh=224  MB render=2472   
+    r3 hairball sz=1600  partition far  sp=28   bvh=139  MB render=3273   
+    r3 hairball sz=1600  hybrid far  sp=28   bvh=224  MB render=3059   
+    r3 hairball sz=3000  naive near sp=32   bvh=393  MB render=2973   
+    r3 hairball sz=3000  replicate near sp=32   bvh=393  MB render=2551   
+    r3 hairball sz=3000  partition near sp=32   bvh=246  MB render=3476   
+    r3 hairball sz=3000  hybrid near sp=32   bvh=393  MB render=2992   
+    r3 hairball sz=3000  naive far  sp=28   bvh=393  MB render=4431   
+    r3 hairball sz=3000  replicate far  sp=28   bvh=393  MB render=3214   
+    r3 hairball sz=3000  partition far  sp=28   bvh=246  MB render=5058   
+    r3 hairball sz=3000  hybrid far  sp=28   bvh=393  MB render=4321   
+    r3 hairball sz=6000  naive near sp=32   bvh=786  MB render=3454   
+    r3 hairball sz=6000  replicate near sp=32   bvh=786  MB render=3159   
+    r3 hairball sz=6000  partition near sp=32   bvh=492  MB render=4439   
+    r3 hairball sz=6000  hybrid near sp=32   bvh=786  MB render=3437   
+    r3 hairball sz=6000  naive far  sp=28   bvh=786  MB render=5242   
+    r3 hairball sz=6000  replicate far  sp=28   bvh=786  MB render=3779   
+    r3 hairball sz=6000  partition far  sp=28   bvh=492  MB render=6507   
+    r3 hairball sz=6000  hybrid far  sp=28   bvh=786  MB render=5133   
+
+############ MEDIAN render_ms + ratios vs naive (per scene,size,dist) + REGIME ############
+  (per-socket L3 = 256 MB; regime: cacheRes=<L3, CONFOUND=half<L3<full, DRAMbnd=half>L3)
+
+  scene=hairball  distance=far   (depth fixed)
+    size    fullMB   regime    N       R       P       H       | R/N   P/N   H/N
+    200     28       cacheRes  439     427     491     420     | 0.97  1.12  0.96 
+    800     112      cacheRes  1675    1394    1690    1615    | 0.83  1.01  0.96 
+    1600    224      cacheRes  3139    2472    3280    3059    | 0.79  1.04  0.97 
+    3000    393      CONFOUND  4431    3355    5119    4321    | 0.76  1.16  0.98 
+    6000    786      DRAMbnd   5263    3956    6565    5133    | 0.75  1.25  0.98 
+
+  scene=hairball  distance=near   (depth fixed)
+    size    fullMB   regime    N       R       P       H       | R/N   P/N   H/N
+    200     28       cacheRes  336     363     444     370     | 1.08  1.32  1.10 
+    800     112      cacheRes  1413    1141    1266    1219    | 0.81  0.90  0.86 
+    1600    224      cacheRes  2343    2277    2312    2211    | 0.97  0.99  0.94 
+    3000    393      CONFOUND  3031    2832    3483    3012    | 0.93  1.15  0.99 
+    6000    786      DRAMbnd   3532    3113    4476    3553    | 0.88  1.27  1.01 
+
+  scene=spheres  distance=far   (depth fixed)
+    size    fullMB   regime    N       R       P       H       | R/N   P/N   H/N
+    100     3        cacheRes  311     306     343     306     | 0.98  1.10  0.98 
+    300     23       cacheRes  409     410     386     326     | 1.00  0.94  0.80 
+    500     56       cacheRes  450     364     391     356     | 0.81  0.87  0.79 
+    800     165      cacheRes  366     345     402     363     | 0.94  1.10  0.99 
+    1200    364      CONFOUND  356     334     448     364     | 0.94  1.26  1.02 
+
+  scene=spheres  distance=near   (depth fixed)
+    size    fullMB   regime    N       R       P       H       | R/N   P/N   H/N
+    100     3        cacheRes  203     215     255     303     | 1.06  1.26  1.49 
+    300     23       cacheRes  247     243     262     223     | 0.98  1.06  0.90 
+    500     56       cacheRes  275     269     286     260     | 0.98  1.04  0.95 
+    800     165      cacheRes  283     250     302     303     | 0.88  1.07  1.07 
+    1200    364      CONFOUND  243     263     334     256     | 1.08  1.37  1.05 
+
+  Trust the NUMA claim only on DRAMbnd rows (even partitions half-tree > L3).
+  CONFOUND rows: partition fits L3 but naive does not -> any P/N<1 is a cache
+    effect, NOT NUMA locality. cacheRes rows: NUMA irrelevant (all fits L3).
+  spheres (compute-bound): R/N,P/N,H/N ~1.0 even on DRAMbnd rows.
+  hairball (memory-bound): R/H<1 on DRAMbnd rows, more at dist32 = real NUMA.
+
+############ E3: DRAM-capacity feasibility sweep (largest scene, far dist) ############
+  --- spheres size=1200 (far node 2) ---
+    spheres  naive budget=0     feasible=1  per_socket=159.3   render=339   
+    spheres  replicate budget=0     feasible=1  per_socket=318.6   render=346   
+    spheres  partition budget=0     feasible=1  per_socket=159.3   render=424   
+    spheres  hybrid budget=0     feasible=1  per_socket=159.3   render=367   
+    spheres  naive budget=2048  feasible=1  per_socket=159.3   render=344   
+    spheres  replicate budget=2048  feasible=1  per_socket=318.6   render=346   
+    spheres  partition budget=2048  feasible=1  per_socket=159.3   render=445   
+    spheres  hybrid budget=2048  feasible=1  per_socket=159.3   render=348   
+    spheres  naive budget=1024  feasible=1  per_socket=159.3   render=354   
+    spheres  replicate budget=1024  feasible=1  per_socket=318.6   render=343   
+    spheres  partition budget=1024  feasible=1  per_socket=159.3   render=425   
+    spheres  hybrid budget=1024  feasible=1  per_socket=159.3   render=327   
+    spheres  naive budget=768   feasible=1  per_socket=159.3   render=340   
+    spheres  replicate budget=768   feasible=1  per_socket=318.6   render=464   
+    spheres  partition budget=768   feasible=1  per_socket=159.3   render=442   
+    spheres  hybrid budget=768   feasible=1  per_socket=159.3   render=351   
+    spheres  naive budget=512   feasible=1  per_socket=159.3   render=343   
+    spheres  replicate budget=512   feasible=1  per_socket=318.6   render=357   
+    spheres  partition budget=512   feasible=1  per_socket=159.3   render=446   
+    spheres  hybrid budget=512   feasible=1  per_socket=159.3   render=376   
+    spheres  naive budget=384   feasible=1  per_socket=159.3   render=356   
+    spheres  replicate budget=384   feasible=1  per_socket=318.6   render=344   
+    spheres  partition budget=384   feasible=1  per_socket=159.3   render=444   
+    spheres  hybrid budget=384   feasible=1  per_socket=159.3   render=337   
+    spheres  naive budget=256   feasible=1  per_socket=159.3   render=346   
+    spheres  replicate budget=256   feasible=0  per_socket=318.6   render=NA    
+    spheres  partition budget=256   feasible=1  per_socket=159.3   render=451   
+    spheres  hybrid budget=256   feasible=1  per_socket=159.3   render=346   
+  --- hairball size=6000 (far node 2) ---
+    hairball naive budget=0     feasible=1  per_socket=379.9   render=5247  
+    hairball replicate budget=0     feasible=1  per_socket=759.7   render=4183  
+    hairball partition budget=0     feasible=1  per_socket=479.6   render=6624  
+    hairball hybrid budget=0     feasible=1  per_socket=379.9   render=5182  
+    hairball naive budget=2048  feasible=1  per_socket=379.9   render=5223  
+    hairball replicate budget=2048  feasible=1  per_socket=759.7   render=3796  
+    hairball partition budget=2048  feasible=1  per_socket=479.6   render=6484  
+    hairball hybrid budget=2048  feasible=1  per_socket=379.9   render=5102  
+    hairball naive budget=1024  feasible=1  per_socket=379.9   render=5241  
+    hairball replicate budget=1024  feasible=1  per_socket=759.7   render=3900  
+    hairball partition budget=1024  feasible=1  per_socket=479.6   render=6576  
+    hairball hybrid budget=1024  feasible=1  per_socket=379.9   render=5104  
+    hairball naive budget=768   feasible=1  per_socket=379.9   render=5254  
+    hairball replicate budget=768   feasible=1  per_socket=759.7   render=3836  
+    hairball partition budget=768   feasible=1  per_socket=479.6   render=6543  
+    hairball hybrid budget=768   feasible=1  per_socket=379.9   render=5159  
+    hairball naive budget=512   feasible=1  per_socket=379.9   render=5281  
+    hairball replicate budget=512   feasible=0  per_socket=759.7   render=NA    
+    hairball partition budget=512   feasible=1  per_socket=479.6   render=6543  
+    hairball hybrid budget=512   feasible=1  per_socket=379.9   render=5112  
+    hairball naive budget=384   feasible=1  per_socket=379.9   render=5242  
+    hairball replicate budget=384   feasible=0  per_socket=759.7   render=NA    
+    hairball partition budget=384   feasible=0  per_socket=479.6   render=NA    
+    hairball hybrid budget=384   feasible=1  per_socket=379.9   render=5142  
+    hairball naive budget=256   feasible=0  per_socket=379.9   render=NA    
+    hairball replicate budget=256   feasible=0  per_socket=759.7   render=NA    
+    hairball partition budget=256   feasible=0  per_socket=479.6   render=NA    
+    hairball hybrid budget=256   feasible=0  per_socket=379.9   render=NA    
+
+############ E3 FEASIBILITY FRONTIER (1=fits, 0=infeasible) ############
+
+  scene=hairball   per-socket footprint: N/P/H=379.9/479.6/379.9 MB  R=759.7 MB
+    budgetMB  N   R   P   H  
+    2048      1   1   1   1  
+    1024      1   1   1   1  
+    768       1   1   1   1  
+    512       1   0   1   1  
+    384       1   0   0   1  
+    256       0   0   0   0  
+    unlim     1   1   1   1  
+
+  scene=spheres   per-socket footprint: N/P/H=159.3/159.3/159.3 MB  R=318.6 MB
+    budgetMB  N   R   P   H  
+    2048      1   1   1   1  
+    1024      1   1   1   1  
+    768       1   1   1   1  
+    512       1   1   1   1  
+    384       1   1   1   1  
+    256       1   0   1   1  
+    unlim     1   1   1   1  
+
+  As budget shrinks R (full copy/socket) goes infeasible FIRST; N/P/H (~G/ns)
+  survive longer. The band where R=0 but P=1 is partitions raison detre:
+  scene exceeds per-socket DRAM -> replication impossible -> partition is the
+  only local-data strategy that fits. (Budget is a feasibility model; see PLAN.)
+
+DONE. Archive: 567M cpF_20260602_005600.tar.gz
+# DONE  job=27297204  Tue Jun  2 01:24:43 PDT 2026

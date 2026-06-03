@@ -1,0 +1,183 @@
+######################################################################
+# cpLv2 coherence-preserving leaf-repl  job=27335169  node=sh04-01n13.int  date=Tue Jun  2 17:12:59 PDT 2026
+######################################################################
+nproc=64
+node distances:
+node   0   1   2   3 
+  0:  10  12  32  32 
+  1:  12  10  32  32 
+  2:  32  32  10  12 
+  3:  32  32  12  10 
+/share/software/user/open/gcc/14.2.0/bin/g++
+g++ (GCC) 14.2.0
+====================================================================
+ COHERENCE-PRESERVING leaf-replication sweep (v2)  host=sh04-01n13.int  date=Tue Jun  2 17:12:59 PDT 2026
+====================================================================
+node distances:
+node   0   1   2   3 
+  0:  10  12  32  32 
+  1:  12  10  32  32 
+  2:  32  32  10  12 
+  3:  32  32  12  10 
+  SMT: CPU(s):                256
+  SMT: Thread(s) per core:    1
+  SMT: Core(s) per socket:    128
+  SMT: Socket(s):             2
+nproc(cpuset)=64 numa_nodes=4
+
+[build]
+  binary ready
+  near 0,1 (dist 12)   far 0,2 (dist 32)
+  X=16 per node, full-machine pair uses 2X=32 threads (all modes equal)
+
+[correctness gate] naive vs leafhybrid(0.5) must bit-match (deterministic config)
+  GATE OK (cea11336327a5bd2ceb27e05549aebf3)
+
+  sizes=[3000 6000] fracs=[0.02 0.05 0.10 0.25 0.50 1.00] depth=5 reps=3
+
+############ leaf-replication sweep (N / R / H(nodes) / leaf-frac) ############
+  ===== rep 1 =====
+    r1 sz=3000  naive      f=NA   near leafMB=0.00   cov=NA    render=2509   
+    r1 sz=3000  replicate  f=NA   near leafMB=0.00   cov=NA    render=2268   
+    r1 sz=3000  hybrid     f=NA   near leafMB=0.00   cov=NA    render=2494   
+    r1 sz=3000  leafhybrid f=0.02 near leafMB=1.99   cov=0.470 render=2589   
+    r1 sz=3000  leafhybrid f=0.05 near leafMB=4.99   cov=0.682 render=2694   
+    r1 sz=3000  leafhybrid f=0.10 near leafMB=9.97   cov=0.850 render=2671   
+    r1 sz=3000  leafhybrid f=0.25 near leafMB=24.93  cov=0.988 render=2610   
+    r1 sz=3000  leafhybrid f=0.50 near leafMB=49.85  cov=1.000 render=2597   
+    r1 sz=3000  leafhybrid f=1.00 near leafMB=99.70  cov=1.000 render=2570   
+    r1 sz=3000  naive      f=NA   far  leafMB=0      cov=NA    render=NA     
+    r1 sz=3000  replicate  f=NA   far  leafMB=0      cov=NA    render=NA     
+    r1 sz=3000  hybrid     f=NA   far  leafMB=0      cov=NA    render=NA     
+    r1 sz=3000  leafhybrid f=0.02 far  leafMB=0      cov=NA    render=NA     
+    r1 sz=3000  leafhybrid f=0.05 far  leafMB=0      cov=NA    render=NA     
+    r1 sz=3000  leafhybrid f=0.10 far  leafMB=0      cov=NA    render=NA     
+    r1 sz=3000  leafhybrid f=0.25 far  leafMB=0      cov=NA    render=NA     
+    r1 sz=3000  leafhybrid f=0.50 far  leafMB=0      cov=NA    render=NA     
+    r1 sz=3000  leafhybrid f=1.00 far  leafMB=0      cov=NA    render=NA     
+    r1 sz=6000  naive      f=NA   near leafMB=0.00   cov=NA    render=2932   
+    r1 sz=6000  replicate  f=NA   near leafMB=0.00   cov=NA    render=2619   
+    r1 sz=6000  hybrid     f=NA   near leafMB=0.00   cov=NA    render=2922   
+    r1 sz=6000  leafhybrid f=0.02 near leafMB=3.99   cov=0.635 render=3092   
+    r1 sz=6000  leafhybrid f=0.05 near leafMB=9.97   cov=0.862 render=3072   
+    r1 sz=6000  leafhybrid f=0.10 near leafMB=19.94  cov=0.972 render=3064   
+    r1 sz=6000  leafhybrid f=0.25 near leafMB=49.85  cov=1.000 render=3033   
+    r1 sz=6000  leafhybrid f=0.50 near leafMB=99.70  cov=1.000 render=3033   
+    r1 sz=6000  leafhybrid f=1.00 near leafMB=199.40 cov=1.000 render=2992   
+    r1 sz=6000  naive      f=NA   far  leafMB=0      cov=NA    render=NA     
+    r1 sz=6000  replicate  f=NA   far  leafMB=0      cov=NA    render=NA     
+    r1 sz=6000  hybrid     f=NA   far  leafMB=0      cov=NA    render=NA     
+    r1 sz=6000  leafhybrid f=0.02 far  leafMB=0      cov=NA    render=NA     
+    r1 sz=6000  leafhybrid f=0.05 far  leafMB=0      cov=NA    render=NA     
+    r1 sz=6000  leafhybrid f=0.10 far  leafMB=0      cov=NA    render=NA     
+    r1 sz=6000  leafhybrid f=0.25 far  leafMB=0      cov=NA    render=NA     
+    r1 sz=6000  leafhybrid f=0.50 far  leafMB=0      cov=NA    render=NA     
+    r1 sz=6000  leafhybrid f=1.00 far  leafMB=0      cov=NA    render=NA     
+  ===== rep 2 =====
+    r2 sz=3000  naive      f=NA   near leafMB=0.00   cov=NA    render=2510   
+    r2 sz=3000  replicate  f=NA   near leafMB=0.00   cov=NA    render=2249   
+    r2 sz=3000  hybrid     f=NA   near leafMB=0.00   cov=NA    render=2503   
+    r2 sz=3000  leafhybrid f=0.02 near leafMB=1.99   cov=0.470 render=2590   
+    r2 sz=3000  leafhybrid f=0.05 near leafMB=4.99   cov=0.682 render=2650   
+    r2 sz=3000  leafhybrid f=0.10 near leafMB=9.97   cov=0.850 render=2670   
+    r2 sz=3000  leafhybrid f=0.25 near leafMB=24.93  cov=0.988 render=2667   
+    r2 sz=3000  leafhybrid f=0.50 near leafMB=49.85  cov=1.000 render=2591   
+    r2 sz=3000  leafhybrid f=1.00 near leafMB=99.70  cov=1.000 render=2553   
+    r2 sz=3000  naive      f=NA   far  leafMB=0      cov=NA    render=NA     
+    r2 sz=3000  replicate  f=NA   far  leafMB=0      cov=NA    render=NA     
+    r2 sz=3000  hybrid     f=NA   far  leafMB=0      cov=NA    render=NA     
+    r2 sz=3000  leafhybrid f=0.02 far  leafMB=0      cov=NA    render=NA     
+    r2 sz=3000  leafhybrid f=0.05 far  leafMB=0      cov=NA    render=NA     
+    r2 sz=3000  leafhybrid f=0.10 far  leafMB=0      cov=NA    render=NA     
+    r2 sz=3000  leafhybrid f=0.25 far  leafMB=0      cov=NA    render=NA     
+    r2 sz=3000  leafhybrid f=0.50 far  leafMB=0      cov=NA    render=NA     
+    r2 sz=3000  leafhybrid f=1.00 far  leafMB=0      cov=NA    render=NA     
+    r2 sz=6000  naive      f=NA   near leafMB=0.00   cov=NA    render=2953   
+    r2 sz=6000  replicate  f=NA   near leafMB=0.00   cov=NA    render=2636   
+    r2 sz=6000  hybrid     f=NA   near leafMB=0.00   cov=NA    render=2910   
+    r2 sz=6000  leafhybrid f=0.02 near leafMB=3.99   cov=0.635 render=3050   
+    r2 sz=6000  leafhybrid f=0.05 near leafMB=9.97   cov=0.862 render=3081   
+    r2 sz=6000  leafhybrid f=0.10 near leafMB=19.94  cov=0.972 render=3071   
+    r2 sz=6000  leafhybrid f=0.25 near leafMB=49.85  cov=1.000 render=3031   
+    r2 sz=6000  leafhybrid f=0.50 near leafMB=99.70  cov=1.000 render=3041   
+    r2 sz=6000  leafhybrid f=1.00 near leafMB=199.40 cov=1.000 render=2991   
+    r2 sz=6000  naive      f=NA   far  leafMB=0      cov=NA    render=NA     
+    r2 sz=6000  replicate  f=NA   far  leafMB=0      cov=NA    render=NA     
+    r2 sz=6000  hybrid     f=NA   far  leafMB=0      cov=NA    render=NA     
+    r2 sz=6000  leafhybrid f=0.02 far  leafMB=0      cov=NA    render=NA     
+    r2 sz=6000  leafhybrid f=0.05 far  leafMB=0      cov=NA    render=NA     
+    r2 sz=6000  leafhybrid f=0.10 far  leafMB=0      cov=NA    render=NA     
+    r2 sz=6000  leafhybrid f=0.25 far  leafMB=0      cov=NA    render=NA     
+    r2 sz=6000  leafhybrid f=0.50 far  leafMB=0      cov=NA    render=NA     
+    r2 sz=6000  leafhybrid f=1.00 far  leafMB=0      cov=NA    render=NA     
+  ===== rep 3 =====
+    r3 sz=3000  naive      f=NA   near leafMB=0.00   cov=NA    render=2530   
+    r3 sz=3000  replicate  f=NA   near leafMB=0.00   cov=NA    render=2250   
+    r3 sz=3000  hybrid     f=NA   near leafMB=0.00   cov=NA    render=2493   
+    r3 sz=3000  leafhybrid f=0.02 near leafMB=1.99   cov=0.470 render=2624   
+    r3 sz=3000  leafhybrid f=0.05 near leafMB=4.99   cov=0.682 render=2610   
+    r3 sz=3000  leafhybrid f=0.10 near leafMB=9.97   cov=0.850 render=2630   
+    r3 sz=3000  leafhybrid f=0.25 near leafMB=24.93  cov=0.988 render=2630   
+    r3 sz=3000  leafhybrid f=0.50 near leafMB=49.85  cov=1.000 render=2610   
+    r3 sz=3000  leafhybrid f=1.00 near leafMB=99.70  cov=1.000 render=2550   
+    r3 sz=3000  naive      f=NA   far  leafMB=0      cov=NA    render=NA     
+    r3 sz=3000  replicate  f=NA   far  leafMB=0      cov=NA    render=NA     
+    r3 sz=3000  hybrid     f=NA   far  leafMB=0      cov=NA    render=NA     
+    r3 sz=3000  leafhybrid f=0.02 far  leafMB=0      cov=NA    render=NA     
+    r3 sz=3000  leafhybrid f=0.05 far  leafMB=0      cov=NA    render=NA     
+    r3 sz=3000  leafhybrid f=0.10 far  leafMB=0      cov=NA    render=NA     
+    r3 sz=3000  leafhybrid f=0.25 far  leafMB=0      cov=NA    render=NA     
+    r3 sz=3000  leafhybrid f=0.50 far  leafMB=0      cov=NA    render=NA     
+    r3 sz=3000  leafhybrid f=1.00 far  leafMB=0      cov=NA    render=NA     
+    r3 sz=6000  naive      f=NA   near leafMB=0.00   cov=NA    render=2931   
+    r3 sz=6000  replicate  f=NA   near leafMB=0.00   cov=NA    render=2630   
+    r3 sz=6000  hybrid     f=NA   near leafMB=0.00   cov=NA    render=2973   
+    r3 sz=6000  leafhybrid f=0.02 near leafMB=3.99   cov=0.635 render=3133   
+    r3 sz=6000  leafhybrid f=0.05 near leafMB=9.97   cov=0.862 render=3092   
+    r3 sz=6000  leafhybrid f=0.10 near leafMB=19.94  cov=0.972 render=3053   
+    r3 sz=6000  leafhybrid f=0.25 near leafMB=49.85  cov=1.000 render=3032   
+    r3 sz=6000  leafhybrid f=0.50 near leafMB=99.70  cov=1.000 render=3012   
+    r3 sz=6000  leafhybrid f=1.00 near leafMB=199.40 cov=1.000 render=3051   
+    r3 sz=6000  naive      f=NA   far  leafMB=0      cov=NA    render=NA     
+    r3 sz=6000  replicate  f=NA   far  leafMB=0      cov=NA    render=NA     
+    r3 sz=6000  hybrid     f=NA   far  leafMB=0      cov=NA    render=NA     
+    r3 sz=6000  leafhybrid f=0.02 far  leafMB=0      cov=NA    render=NA     
+    r3 sz=6000  leafhybrid f=0.05 far  leafMB=0      cov=NA    render=NA     
+    r3 sz=6000  leafhybrid f=0.10 far  leafMB=0      cov=NA    render=NA     
+    r3 sz=6000  leafhybrid f=0.25 far  leafMB=0      cov=NA    render=NA     
+    r3 sz=6000  leafhybrid f=0.50 far  leafMB=0      cov=NA    render=NA     
+    r3 sz=6000  leafhybrid f=1.00 far  leafMB=0      cov=NA    render=NA     
+
+############ SUMMARY: median render_ms, ratio vs naive, vs replicated-MB ############
+
+  hairball 3000 strands, distance=near   (N=2510  R=2250  H_nodes=2494 ms)
+    full replicate R/N=0.90   top-K node hybrid H/N=0.99
+    frac    leaf_MB   coverage  render  L/N    
+    0(N)    0         0.000     2510    1.00   
+    0.10    9.97      0.850     2670    1.06   
+    1.00    99.70     1.000     2553    1.02   
+    0.02    1.99      0.470     2590    1.03   
+    0.50    49.85     1.000     2597    1.03   
+    0.05    4.99      0.682     2650    1.06   
+    0.25    24.93     0.988     2630    1.05   
+    R(all)  -         1.000     2250    0.90      <- full geometry replicate (ceiling)
+
+  hairball 6000 strands, distance=near   (N=2932  R=2630  H_nodes=2922 ms)
+    full replicate R/N=0.90   top-K node hybrid H/N=1.00
+    frac    leaf_MB   coverage  render  L/N    
+    0(N)    0         0.000     2932    1.00   
+    0.10    19.94     0.972     3064    1.05   
+    1.00    199.40    1.000     2992    1.02   
+    0.02    3.99      0.635     3092    1.05   
+    0.50    99.70     1.000     3033    1.03   
+    0.05    9.97      0.862     3081    1.05   
+    0.25    49.85     1.000     3032    1.03   
+    R(all)  -         1.000     2630    0.90      <- full geometry replicate (ceiling)
+
+  Read: if L/N drops to ~R/N at a SMALL frac (small leaf_MB), then you
+  need NOT replicate all geometry -- the hot leaf fraction recovers R.
+  Compare the frac where L/N plateaus against the node-hybrid H/N (~1.0):
+  leaf replication should beat node replication for this mesh workload.
+
+DONE. Archive: 147M cpLv2_20260602_171259.tar.gz
+# DONE  job=27335169  Tue Jun  2 17:23:04 PDT 2026

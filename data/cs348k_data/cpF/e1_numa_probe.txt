@@ -1,0 +1,24 @@
+NUMA_PROBE nodes=4 lat_buf=512MB bw_arr=1024MB chase_steps=100000000
+--- node distances (SLIT) ---
+node distances:
+node   0   1   2   3 
+  0:  10  12  32  32 
+  1:  12  10  32  32 
+  2:  32  32  10  12 
+  3:  32  32  12  10 
+
+LATENCY (thread on node 0, ns/dependent-load):
+  dataNode ns/access  vs_local   note    
+  0        127.60     1.00x      LOCAL
+  1        145.02     1.14x      cross
+  2        224.57     1.76x      cross
+  3        221.96     1.74x      cross
+
+BANDWIDTH (16 threads on node 0, GB/s triad):
+  dataNode GB/s       vs_local   note    
+  0        32.25      1.00x      LOCAL
+  1        32.04      0.99x      cross
+  2        19.82      0.61x      cross
+  3        22.34      0.69x      cross
+
+NP_DONE

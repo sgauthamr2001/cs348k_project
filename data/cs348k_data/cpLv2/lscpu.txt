@@ -1,0 +1,4 @@
+  SMT: CPU(s):                256
+  SMT: Thread(s) per core:    1
+  SMT: Core(s) per socket:    128
+  SMT: Socket(s):             2
